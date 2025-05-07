@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using BlazorGridStack.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -29,7 +30,9 @@ namespace BlazorGridStack
         public GridStackInterop(IJSRuntime jsRuntime)
         {
             moduleTask = new(() => jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorGridStack/gridStackInterop.js").AsTask());
+            //  "import", "./_content/BlazorGridStack/gridStackInterop.js").AsTask());
+            "import", "./lib/gridstack/gridStackInterop.js?v=1").AsTask()); //"./_content/BlazorGridStack/gridStackInterop.js"
+
         }
 
         public async Task Init(BlazorGridStackBodyOptions options)
@@ -112,7 +115,14 @@ namespace BlazorGridStack
 
         public async Task<int> GetCellHeight()
         {
-            return await GridInstance.InvokeAsync<int>("getCellHeight");
+            var jsonElement = await GridInstance.InvokeAsync<JsonElement>("getCellHeight");
+
+            if (float.TryParse(jsonElement.ToString(), out float result))
+                return (int)result;
+            else throw new InvalidOperationException("Unable to parse cell height from JS result.");
+
+
+            // return await GridInstance.InvokeAsync<int>("getCellHeight");
         }
 
         public async Task<BlazorGridCoordinates> GetCellFromPixel(int top, int left, bool? useOffset = null)

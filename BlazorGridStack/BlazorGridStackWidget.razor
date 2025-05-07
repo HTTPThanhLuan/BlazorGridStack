@@ -1,7 +1,114 @@
-﻿<div id="@WidgetOptions?.Id" class="grid-stack-item" gs-auto-position="@WidgetOptions?.AutoPosition" gs-x="@WidgetOptions?.X" gs-y="@WidgetOptions?.Y" gs-w="@WidgetOptions?.W" 
-     gs-h="@WidgetOptions?.H" gs-max-w="@WidgetOptions?.MaxW" gs-min-w="@WidgetOptions?.MinW" gs-max-h="@WidgetOptions?.MaxH" 
-     gs-min-h="@WidgetOptions?.MinH" gs-locked="@WidgetOptions?.Locked.ToString()" gs-no-resize="@WidgetOptions?.NoResize.ToString()" gs-no-move="@WidgetOptions?.NoMove.ToString()" 
-     gs-resize-handles="@WidgetOptions?.ResizeHandles" gs-content="@WidgetOptions?.Content" 
-     gs-sub-grid="@WidgetOptions?.SubGrid">
-    <div class="grid-stack-item-content">@ChildContent</div>
+﻿@using Microsoft.AspNetCore.Components.Web
+
+<div id="@WidgetOptions?.Id" class="grid-stack-item" gs-auto-position="@WidgetOptions?.AutoPosition" gs-x="@WidgetOptions?.X" gs-y="@WidgetOptions?.Y" gs-w="@WidgetOptions?.W"
+gs-h="@WidgetOptions?.H" gs-max-w="@WidgetOptions?.MaxW" gs-min-w="@WidgetOptions?.MinW" gs-max-h="@WidgetOptions?.MaxH"
+gs-min-h="@WidgetOptions?.MinH" gs-locked="@WidgetOptions?.Locked.ToString()" gs-no-resize="@WidgetOptions?.NoResize.ToString()" gs-no-move="@WidgetOptions?.NoMove.ToString()"
+gs-resize-handles="@WidgetOptions?.ResizeHandles" gs-content="@WidgetOptions?.Content"
+gs-sub-grid="@WidgetOptions?.SubGrid">
+    <div class="grid-stack-item-content" style="background-color: @WidgetOptions.BackgroundColor; ">
+        <div class="item-header">
+        </div>
+        @if (WidgetOptions.IsEditable || WidgetOptions.IsDeletable)
+        {
+            <div class="item-command" @ref=DropdownRef>
+                <div style="text-align: right;">
+                    <button class="command-button" style="" @onclick=ShowCommands>
+                        <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+                    </button>
+                </div>
+                @if (isShowingCommands == true)
+                {
+                    <ul class="commands-ul">
+                        @if (WidgetOptions.IsEditable)
+                        {
+                            <li>
+                                <button @onclick=EditClick>Settings</button>
+                            </li>
+                        }
+                        @if (WidgetOptions.IsDeletable)
+                        {
+                            <li>
+                                <button @onclick=DeleteClick>Delete</button>
+                            </li>
+                        }                      
+
+                    </ul>
+                }
+            </div>
+        }
+
+        @ChildContent
+    </div>
 </div>
+<style>
+    .item-header {
+        height: 30px;
+    }
+
+
+    .item-command {
+        right: 3px;
+        position: absolute;
+        top: 3px;
+        display: none;
+        background-color: transparent; /*  rgba(0,0,0,.1); */
+        width: 100px;
+        height: 100px;     
+      
+    }
+
+    .command-button {
+        border: 0px;
+        background: grey; /* rgba(0,0,0,.5); */
+        cursor: pointer;
+    }
+
+        .command-button:hover {
+            background: rgba(0,0,0,.1);
+            cursor: pointer;
+        }
+
+    .grid-stack-item:hover .item-command {
+        display: block;
+    }
+
+    
+    .item-command .commands-ul {
+        list-style-type: none;
+        padding: 0px;
+        background-color: #EFF0F0;
+        margin: 0;
+         box-shadow: 0px 0px 10px rgba(0, 0, 0, .2);
+    }
+
+        .item-command .commands-ul li {
+            text-align: right;
+        }
+
+            .item-command .commands-ul li button {
+                width: 100%;
+                text-align: left;
+                background: unset;
+                border: 0;
+                margin: 0px 0px 5px 0px;
+            }
+
+                .item-command .commands-ul li button:hover {
+                       background-color: rgba(0, 0, 0, .15);
+                 }
+</style>
+
+<script>
+    window.registerOutsideClick = (element, dotNetHelper) => {
+
+        element.addEventListener('mouseleave', () => {
+            dotNetHelper.invokeMethodAsync('CloseDropdown');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!element.contains(e.target)) {
+                dotNetHelper.invokeMethodAsync('CloseDropdown');
+            }
+        });
+    };
+</script>

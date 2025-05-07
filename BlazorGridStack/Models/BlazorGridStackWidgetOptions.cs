@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,8 +23,13 @@ namespace BlazorGridStack.Models
         public bool? NoResize { get; set; }
         public bool? NoMove { get; set; }
         public string? ResizeHandles { get; set; }
-        public object Id { get; set; }
+        public Guid Id { get; set; }
         public string? Content { get; set; }
+        [NotMapped]
         public BlazorGridStackBodyOptions? SubGrid { get; set; }
+        public bool ShouldRender { get; set; } = true;
+        public bool IsEditable { get; set; } = true;
+        public bool IsDeletable { get; set; } = true;
+        public string BackgroundColor { get; set; } = "rgba(0,0,0,.1)";
     }
 }

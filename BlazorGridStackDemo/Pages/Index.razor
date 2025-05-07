@@ -4,20 +4,141 @@
 <PageTitle>BlazorGridStack Demo</PageTitle>
 
 <button onclick="@AddElementClicked">Add Element</button>
+<button onclick="@OnClick">Add Element</button>
 <button onclick="@CompactClicked">Compact</button>
 <button onclick="@DisableClicked">Disable</button>
 <button onclick="@EnableClicked">Enable</button>
 <button onclick="@ClearClicked">Clear</button>
 <button onclick="@GetItemsClicked">GetItems</button>
-<BlazorGridStackBody @ref="Grid" GridStackOptions="@(new BlazorGridStackBodyOptions {
-    Removable = ".remove"
-})"></BlazorGridStackBody>
+
+<button onclick="@Widget1Clicked">Widget1</button>
+<button onclick="@Widget2Clicked">Widget2</button>
+@if (isGridStackReady)
+{
+    <BlazorGridStack.BlazorGridStackBody @ref="Grid" GridStackOptions=options
+                                         OnResizeStop=OnResizeStop
+                                         OnDragStop=OnDragStop
+    >
+        @foreach (var item in items)
+        {
+            <BlazorGridStackWidget @key=item.options.Id.ToString() WidgetOptions=item.options DeleteBtn_OnClick="Delete">
+                @item.content
+            </BlazorGridStackWidget>
+        }
+    </BlazorGridStack.BlazorGridStackBody>
+
+
+}
+else
+{
+    <span>
+        Loading...
+        }
+    </span>
+}
 
 <div class="remove"></div>
-
 @code {
+    [Inject] IJSRuntime JSRuntime { get; set; } = default!;
     BlazorGridStackBody? Grid;
+    BlazorGridStackBodyOptions options = new()
+        {
+        // Row =2,
+            Float = true,
+            Removable = ".remove"
+           //,MinRow = 10,
+        };
+    List<CombinedModel> items = new();
+    List<CombinedModel> data = new();
+    bool isGridStackReady = false;
+    Guid _guid1 = Guid.NewGuid();
+    Guid _guid2 = Guid.NewGuid();
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1000);
+        data = new()
+            {
+                new CombinedModel()
+                {
+                    options = new BlazorGridStackWidgetOptions {Id =_guid1, W = 2, H = 2 },
+                    content = (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(DummyComponent));
+                        builder.AddAttribute(1, "Name", "Widget1");
+                        builder.CloseComponent();
+                    }
+                }  ,
+                 new CombinedModel()
+                {
+                    options = new BlazorGridStackWidgetOptions {Id = _guid2, W = 2, H = 2 },
+                    content = (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(DummyComponent));
+                        builder.AddAttribute(1, "Name", "Widget2");
+                        builder.CloseComponent();
+                    }
+                }
+            };
+        items = data;
+        isGridStackReady = true;
 
+
+
+
+        //   await  Grid.AddWidget(new BlazorGridStackWidgetOptions { Id = items[0].options.Id.ToString(), W = 2, H = 2 });
+
+
+        //await Grid.AddWidget(new BlazorGridStackWidgetOptions { Id = Guid.NewGuid().ToString(), W = 2, H = 2 });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            //Wait for Grid render first, so that Grid is not null.
+            await Task.Delay(5000);
+            //TODO: Do something with the grid.
+
+          
+           
+        }
+    }
+
+    async Task OnResizeStop(BlazorGridStackWidgetEventArgs arg)
+    {
+        // Handle the resize stop event
+        Console.WriteLine("Resize stopped");
+    }
+    async Task OnDragStop(BlazorGridStackWidgetEventArgs arg)
+    {
+        // Handle the resize stop event
+        Console.WriteLine("Resize stopped");
+    }
+    
+    private bool preventRender = false;
+
+    protected override bool ShouldRender()
+    {
+        return !preventRender;  // Prevents re-rendering if `preventRender` is true
+    }
+    async Task OnClick()
+    {
+        //   preventRender = true; // Prevent the parent component from re-rendering
+        var newGuid = Guid.NewGuid();
+        CombinedModel newWidget = new()
+            {
+                options = new BlazorGridStackWidgetOptions { Id = newGuid, W = 2, H = 2 },
+                content = (builder) =>
+                {
+                    builder.OpenComponent(0, typeof(DummyComponent));
+                    builder.CloseComponent();
+                }
+            };
+
+        items.Add(newWidget);
+        await Task.Delay(100); //Wait for the new widget to be added to the DOM.
+        await Grid.AddWidget(newGuid.ToString());
+    }
     public void AddElementClicked()
     {
         Grid.AddWidget(new BlazorGridStackWidgetOptions
@@ -50,5 +171,41 @@
     public async void GetItemsClicked()
     {
         var gridItems = await Grid.GetGridItems();
+    }
+
+    public async Task Delete(BlazorGridStackWidgetOptions option)
+    {
+        await Grid.RemoveWidget(option.Id.ToString(), true, true);
+        // items.RemoveAll(x => x.options.Id.ToString() == option.Id.ToString());
+    }
+
+    public class CombinedModel
+    {
+        public BlazorGridStackWidgetOptions options { get; set; }
+        public RenderFragment content { get; set; }
+    }
+
+    private async Task Widget1Clicked()
+    {
+        isGridStackReady = false;
+        await Task.Delay(1000);
+        // await  Grid.RemoveWidget(_guid2.ToString(), true, true);
+        // await Grid.RemoveWidget(_guid2.ToString(), true);
+        var widget1 = data.FirstOrDefault(x => x.options.Id.ToString() == _guid1.ToString());
+        items = new List<CombinedModel> { widget1 };
+        // await Task.Delay(200);
+
+        isGridStackReady = true;
+
+    }
+    private async Task Widget2Clicked()
+    {
+        isGridStackReady = false;
+        await Task.Delay(1000);
+        //await Grid.RemoveWidget(_guid1.ToString(),true);
+        var widget2 = data.FirstOrDefault(x => x.options.Id.ToString() == _guid2.ToString());
+        items = new List<CombinedModel> { widget2 };
+        isGridStackReady = true;
+
     }
 }
